@@ -30,6 +30,7 @@ class AttendanceApp(App):
             data = fetch_sheet_data(sheet_url)
             summary = summarize_attendance(data)
             summary_text = "\n".join([f"{key}: {value} days present" for key, value in summary.items()])
+            print(summary_text)
             self.result_label.text = summary_text
         except Exception as e:
             self.result_label.text = f"Error: {str(e)}"
