@@ -4,7 +4,7 @@ from collections import defaultdict
 import pandas as pd
 import re
 
-def fetch_sheet_data(sheet_url):
+def fetch_sheet_data(sheet_url,course):
     # Authenticate using the Service Account JSON file
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
     credentials = ServiceAccountCredentials.from_json_keyfile_name("C:/Users/yuvra/OneDrive/Desktop/KASHI/IIPS_attendance_app/Attendance_System/Credentials.json", scope)
@@ -15,7 +15,7 @@ def fetch_sheet_data(sheet_url):
     worksheet = sheet.get_worksheet(0)  # Assuming the first sheet
     data = worksheet.get_all_records()
     data = pd.DataFrame(data)
-    data=get_roll_name_and_clean(data,"MBA(MS)")
+    data=get_roll_name_and_clean(data,course)
     return data
 
 def summarize_attendance(data,student_name):
