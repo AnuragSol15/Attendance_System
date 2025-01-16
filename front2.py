@@ -9,10 +9,13 @@ from kivy.graphics import Color, Rectangle
 from kivy.uix.image import Image
 from kivy.uix.screenmanager import ScreenManager, Screen
 from backend import fetch_sheet_data, summarize_attendance
+from kivy.uix.gridlayout import GridLayout
+from kivy.uix.scrollview import ScrollView
+import pandas as pd
 
 class WelcomeScreen(Screen):
     def __init__(self, **kwargs):
-        super(WelcomeScreen, self).__init__(**kwargs)
+        super(WelcomeScreen, self).__init__(name=kwargs["name"])
         self.layout = BoxLayout(orientation='vertical', padding=20)
 
         # Logos
@@ -20,7 +23,7 @@ class WelcomeScreen(Screen):
         logo_left = Image(source="C:/Users/yuvra/OneDrive/Desktop/KASHI/IIPS_attendance_app/Attendance_System/Davv_LOGO_removed_bg.png")
         logo_right = Image(source="C:/Users/yuvra/OneDrive/Desktop/KASHI/IIPS_attendance_app/Attendance_System/iipslogo.jpg")
         logo_layout.add_widget(logo_left)
-        logo_layout.add_widget(Label(text="The Name of Institute", font_size=24, bold=True, color=(1, 1, 1, 1), halign='center'))
+        logo_layout.add_widget(Label(text="International Institute of Professional Studies", font_size=24, bold=True, color=(1, 1, 1, 1), halign='center'))
         logo_layout.add_widget(logo_right)
         self.layout.add_widget(logo_layout)
 
@@ -49,43 +52,43 @@ class WelcomeScreen(Screen):
 
         # Fetch Button
         self.fetch_button = Button(text="Fetch Attendance", size_hint_y=None, height=60, background_color=(0.5, 0.8, 1, 1))
-        self.fetch_button.bind(on_press=self.fetch_data)
+        self.fetch_button.bind(on_press=kwargs["attend"].fetch_data)
         self.layout.add_widget(self.fetch_button)
 
         self.add_widget(self.layout)
     
-    def fetch_data(self, instance):
-        sheet_url = self.welcome_screen.link_input.text
-        course = self.welcome_screen.course_input.text  # Corrected to use the Button's text
-
-        try:
-            data = fetch_sheet_data(sheet_url, course)  # Pass course to backend
-            summary = summarize_attendance(data)
-
-            result_text = "\n".join([f"{student}: {attendance['total_days_present']} days present" for student, attendance in summary.items()])
-
-            self.result_screen.update_result(result_text)
-            self.screen_manager.current = 'result'
-
-        except Exception as e:
-            self.result_screen.update_result(f"Error: {str(e)}")
-            self.screen_manager.current = 'result'
-
+    
 
 
 class ResultScreen(Screen):
     def __init__(self, **kwargs):
         super(ResultScreen, self).__init__(**kwargs)
-        self.layout = BoxLayout(orientation='vertical')
+        self.main_layout = GridLayout(cols=1)
+      
+        self.add_widget(self.main_layout)
 
-        # Result Label
-        self.result_label = Label(text="", text_size=(Window.width, None), halign='center', color=(1, 1, 1, 1))
-        self.layout.add_widget(self.result_label)
 
-        self.add_widget(self.layout)
+    def update_result(self, df):
+        # Create a Scrollable GridLayout for the table
+        table_layout = GridLayout(cols=len(df.columns), size_hint_y=None)
+        table_layout.bind(minimum_height=table_layout.setter('height'))
 
-    def update_result(self, result_text):
-        self.result_label.text = result_text
+        # Add headers
+        for col in df.columns:
+            table_layout.add_widget(Label(text=str(col), bold=True, size_hint_y=None, height=40))
+
+        # Add rows
+        for _, row in df.iterrows():
+            for value in row:
+                table_layout.add_widget(Label(text=str(value), size_hint_y=None, height=30))
+
+        # Wrap in a ScrollView
+        scroll_view = ScrollView(size_hint=(1, 1))
+        scroll_view.add_widget(table_layout)
+
+        # Clear and update the main layout
+        self.main_layout.clear_widgets()
+        self.main_layout.add_widget(scroll_view)
 
 
 class AttendanceApp(App):
@@ -94,12 +97,27 @@ class AttendanceApp(App):
 
         # Create Screen Manager
         self.screen_manager = ScreenManager()
-        self.welcome_screen = WelcomeScreen(name='welcome')
+        self.welcome_screen = WelcomeScreen(name='welcome',attend=self)
         self.result_screen = ResultScreen(name='result')
         self.screen_manager.add_widget(self.welcome_screen)
         self.screen_manager.add_widget(self.result_screen)
 
         return self.screen_manager
+    
+    def fetch_data(self, instance):
+        sheet_url = self.welcome_screen.link_input.text
+        course = self.welcome_screen.course_input.text  # Corrected to use the Button's text
+
+        try:
+            data = fetch_sheet_data(sheet_url, course)  # Pass course to backend
+            summary = summarize_attendance(data,"IM-2K24-70 NAYRA VIJAYVARGIYA")
+            self.result_screen.update_result(summary)
+            self.screen_manager.current = 'result'
+
+        except Exception as e:
+            self.result_screen.update_result(f"Error: {str(e)}")
+            self.screen_manager.current = 'result'
+
 
     
 

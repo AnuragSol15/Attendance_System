@@ -7,7 +7,7 @@ import re
 def fetch_sheet_data(sheet_url,course):
     # Authenticate using the Service Account JSON file
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    credentials = ServiceAccountCredentials.from_json_keyfile_name("C:/Users/yuvra/OneDrive/Desktop/KASHI/IIPS_attendance_app/Attendance_System/Cred.json", scope)
+    credentials = ServiceAccountCredentials.from_json_keyfile_name("Cred.json", scope)
     client = gspread.authorize(credentials)
 
     # Open the Google Sheet by URL
@@ -46,7 +46,7 @@ def get_present(data,student_name,subject,date):
     return data[(data["Select Subject"]==subject) & (data["Date"]=="2024-10-08")][student_name]
 
 def get_roll_name_and_clean(data,course):
-    Course={"MBA(MS)":"IM", "MCA":"IC", "MTECH":"IT"}
+    Course={"MBA(MS)(5Y)":"IM", "MCA":"IC", "MTECH":"IT"}
     col_dict={}
     columns=data.columns
     for col in columns:
