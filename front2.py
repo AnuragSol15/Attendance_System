@@ -1,5 +1,6 @@
 from kivy.app import App
-from kivy.uix.boxlayout import BoxLayout, HorizontalLayout, VerticalLayout
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.layout import HorizontalLayout, VerticalLayout
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.uix.button import Button
