@@ -4,10 +4,10 @@ from collections import defaultdict
 import pandas as pd
 import re
 
-def fetch_sheet_data(sheet_url):
+def fetch_sheet_data(sheet_url,course):
     # Authenticate using the Service Account JSON file
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    credentials = ServiceAccountCredentials.from_json_keyfile_name("C:/Users/yuvra/OneDrive/Desktop/KASHI/IIPS_attendance_app/Attendance_System/Credentials.json", scope)
+    credentials = ServiceAccountCredentials.from_json_keyfile_name("Cred.json", scope)
     client = gspread.authorize(credentials)
 
     # Open the Google Sheet by URL
@@ -15,7 +15,7 @@ def fetch_sheet_data(sheet_url):
     worksheet = sheet.get_worksheet(0)  # Assuming the first sheet
     data = worksheet.get_all_records()
     data = pd.DataFrame(data)
-    data=get_roll_name_and_clean(data,"MBA(MS)")
+    data=get_roll_name_and_clean(data,course)
     return data
 
 def summarize_attendance(data,student_name):
@@ -24,6 +24,7 @@ def summarize_attendance(data,student_name):
     grouped_data=grouped_data.reset_index()
     grouped_data["Total"]=grouped_data["Select Subject"].map(data.groupby("Select Subject")[student_name].count())
     grouped_data["Percentage"]=(grouped_data[student_name]/grouped_data["Total"])*100
+    grouped_data["Percentage"] = grouped_data["Percentage"].round(2)
     print(grouped_data)
     return grouped_data
 
@@ -32,7 +33,7 @@ def get_subjectwise(data,subject):
     grouped_data=grouped_data.loc[subject,:].to_frame()
     grouped_data=grouped_data.rename(columns={subject:"Classes_Attended"})
     Total_classes=data[data["Select Subject"]==subject].shape[0]
-    grouped_data["Percentage_Classes_Attended"]=grouped_data["Classes_Attended"]/Total_classes*100
+    grouped_data["Percentage_Classes_Attended"]=(grouped_data["Classes_Attended"]/Total_classes*100).round(2)
     print(Total_classes)
     return grouped_data
 
@@ -46,7 +47,7 @@ def get_present(data,student_name,subject,date):
     return data[(data["Select Subject"]==subject) & (data["Date"]=="2024-10-08")][student_name]
 
 def get_roll_name_and_clean(data,course):
-    Course={"MBA(MS)":"IM", "MCA":"IC", "MTECH":"IT"}
+    Course={"MBA(MS)(5Y)":"IM", "MCA":"IC", "MTECH":"IT"}
     col_dict={}
     columns=data.columns
     for col in columns:
@@ -65,6 +66,6 @@ def get_roll_name_and_clean(data,course):
     return data
 
 if __name__ == "__main__":
-    data=fetch_sheet_data("https://docs.google.com/spreadsheets/d/1KFjU2WfAwAVTH3C9ZNWd3aZYGkm_nuWc-hePuB1lduY/edit?gid=1499235755#gid=1499235755")
-    summarize_attendance(data,"IM-2K24-70 NAYRA VIJAYVARGIYA")
+    data=fetch_sheet_data("https://docs.google.com/spreadsheets/d/1KFjU2WfAwAVTH3C9ZNWd3aZYGkm_nuWc-hePuB1lduY/edit?gid=1499235755#gid=1499235755","MBA(MS)(5Y)")
+    #summarize_attendance(data,"IM-2K24-70 NAYRA VIJAYVARGIYA")
     print(filter_students_by_criteria(data,"IM-101 Principles and Practices of Management",72))

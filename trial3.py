@@ -4,6 +4,7 @@ from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.uix.button import Button
 from kivy.uix.dropdown import DropDown
+from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.core.window import Window
 from kivy.graphics import Color, Rectangle
 from backend import fetch_sheet_data, summarize_attendance
@@ -31,7 +32,9 @@ class AttendanceApp(App):
             btn = Button(text=course, size_hint_y=None, height=40)
             btn.bind(on_release=lambda btn: self.course_dropdown.select(btn.text))
             self.course_dropdown.add_widget(btn)
-        self.course_input = Button(text="...", size_hint_y=None, height=40, on_release=self.course_dropdown.open)
+        self.course_input = Button(text="Select a Course", size_hint_y=None, height=40)
+        self.course_input.bind(on_release=self.course_dropdown.open)
+        self.course_dropdown.bind(on_select=lambda instance, x: setattr(self.course_input, 'text', x))
         course_selection_layout.add_widget(self.course_label)
         course_selection_layout.add_widget(self.course_input)
         self.layout.add_widget(course_selection_layout)
@@ -48,18 +51,20 @@ class AttendanceApp(App):
         self.fetch_button = Button(text="Fetch Attendance", size_hint_y=None, height=60, background_color=(0.5, 0.8, 1, 1))
         self.fetch_button.bind(on_press=self.fetch_data)
         self.layout.add_widget(self.fetch_button)
+        
 
         # Result Label with white text color for readability
         self.result_label = Label(text="", text_size=(Window.width, None), halign='center', color=(1, 1, 1, 1))
         self.layout.add_widget(self.result_label)
 
         return self.layout
-
+        
     def fetch_data(self, instance):
         sheet_url = self.link_input.text
+        course= self.course_input.text
         
         try:
-            data = fetch_sheet_data(sheet_url)
+            data = fetch_sheet_data(sheet_url,course)
             summary = summarize_attendance(data)
             summary_text = "\n".join([f"{key}: {value} days present" for key, value in summary.items()])
             print(summary_text)
